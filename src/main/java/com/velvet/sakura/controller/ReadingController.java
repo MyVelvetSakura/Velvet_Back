@@ -1,12 +1,12 @@
 package com.velvet.sakura.controller;
 
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import com.velvet.sakura.dto.request.CreateReadingRequest;
+import com.velvet.sakura.dto.request.UpdateNameRequest;
 import com.velvet.sakura.dto.response.ReadingResponse;
 import com.velvet.sakura.service.ReadingService;
 
@@ -31,8 +31,8 @@ public class ReadingController {
     }
 
     @PatchMapping("/{id}")
-    public ReadingResponse updateName(@PathVariable Long id, @RequestBody String newName) {
-        return readingService.updateName(id, newName);
+    public ReadingResponse updateName(@PathVariable Long id, @RequestBody UpdateNameRequest request) {
+        return readingService.updateName(id, request.getName());
     }
 
     @DeleteMapping("/{id}")
@@ -44,4 +44,5 @@ public class ReadingController {
     public void deleteAllByUser(@RequestParam Long userId) {
         readingService.deleteAllByUserId(userId);
     }
+
 }

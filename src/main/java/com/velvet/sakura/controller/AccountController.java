@@ -6,7 +6,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.velvet.sakura.dto.request.CreateAccountRequest;
 import com.velvet.sakura.dto.request.LoginRequest;
+import com.velvet.sakura.dto.request.UpdateNameRequest;
 import com.velvet.sakura.dto.response.AccountResponse;
+import com.velvet.sakura.dto.response.AuthResponse;
 import com.velvet.sakura.service.AccountService;
 
 import jakarta.validation.Valid;
@@ -36,7 +38,7 @@ public class AccountController {
     }
 
     @PostMapping("/login")
-    public AccountResponse login(@RequestBody LoginRequest request) {
+    public AuthResponse login(@RequestBody LoginRequest request) {
         return accountService.login(request);
     }
 
@@ -46,7 +48,9 @@ public class AccountController {
     }
 
     @PatchMapping("/{id}")
-    public AccountResponse updateName(@PathVariable Long id, @RequestBody String newName) {
-        return accountService.updateName(id, newName);
+    public AccountResponse updateName(@PathVariable Long id, @RequestBody UpdateNameRequest request) {
+        return accountService.updateName(id, request.getName());
     }
+
+    
 }
