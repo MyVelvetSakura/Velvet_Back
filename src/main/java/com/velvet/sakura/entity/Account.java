@@ -29,4 +29,13 @@ public class Account {
 
     @Column(nullable = false)
     private String passwordHash;
+    
+     @Column(nullable = false)
+    @Builder.Default
+    private boolean enabled = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private String avatarKey = "default";
+    
 }

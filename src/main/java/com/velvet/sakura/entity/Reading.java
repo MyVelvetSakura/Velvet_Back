@@ -18,7 +18,11 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "readings")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Reading {
 
     @Id
@@ -44,7 +48,12 @@ public class Reading {
     private Long futureCardId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name="deck_type",nullable = false)
+    @Column(name = "deck_type", nullable = false)
     private DeckType deckType;
 
+    @Column(columnDefinition = "TEXT")
+    private String question;
+
+    @Column(columnDefinition = "TEXT")
+    private String interpretation;
 }

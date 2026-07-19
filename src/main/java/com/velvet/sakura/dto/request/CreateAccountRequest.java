@@ -7,14 +7,16 @@ import lombok.Data;
 
 @Data
 public class CreateAccountRequest {
-@NotBlank
-private String name;
+    @NotBlank
+    private String name;
 
-@Email
-@NotBlank
-private String email;
+    @Email
+    @NotBlank
+    private String email;
 
-@NotBlank
-@Size(min=8)
-private String password;
+    @NotBlank
+    @Size(min = 8)
+    private String password;
+
+    private String avatarKey;
 }
