@@ -17,6 +17,7 @@ import java.util.List;
 public class ReadingServiceImpl implements ReadingService {
 
     private final ReadingRepository readingRepository;
+    private final ProgressService progressService;
 
     @Override
     public ReadingResponse createReading(CreateReadingRequest request) {
@@ -28,9 +29,20 @@ public class ReadingServiceImpl implements ReadingService {
                 .presentCardId(request.getPresentCardId())
                 .futureCardId(request.getFutureCardId())
                 .deckType(request.getDeckType())
+                .question(request.getQuestion())
+                .interpretation(request.getInterpretation())
                 .build();
 
-        return toResponse(readingRepository.save(reading));
+        Reading saved = readingRepository.save(reading);
+
+        progressService.registerReadingCompleted(
+                request.getUserId(),
+                request.getDeckType().toString(),
+                request.getPastCardId(),
+                request.getPresentCardId(),
+                request.getFutureCardId());
+
+        return toResponse(saved);
     }
 
     @Override
@@ -71,7 +83,15 @@ public class ReadingServiceImpl implements ReadingService {
                 reading.getPastCardId(),
                 reading.getPresentCardId(),
                 reading.getFutureCardId(),
-                reading.getDeckType()
-        );
+                reading.getDeckType(),
+                reading.getQuestion(),
+                reading.getInterpretation());
+    }
+
+    @Override
+    public ReadingResponse findById(Long id) {
+        Reading reading = readingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Lectura no encontrada"));
+        return toResponse(reading);
     }
 }

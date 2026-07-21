@@ -25,4 +25,8 @@ public class CreateReadingRequest {
 
     @NotNull
     private DeckType deckType;
+
+    private String question;
+
+    private String interpretation;
 }

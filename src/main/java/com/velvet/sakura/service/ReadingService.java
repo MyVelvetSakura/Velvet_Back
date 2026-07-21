@@ -12,4 +12,5 @@ public interface ReadingService {
     ReadingResponse updateName(Long id, String newName);
     void deleteReading(Long id);
     void deleteAllByUserId(Long userId);
+    public ReadingResponse findById(Long id);
 }

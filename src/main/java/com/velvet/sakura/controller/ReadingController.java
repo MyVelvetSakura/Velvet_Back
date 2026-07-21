@@ -45,4 +45,11 @@ public class ReadingController {
         readingService.deleteAllByUserId(userId);
     }
 
+    @GetMapping("/{id}")
+    public ReadingResponse getById(@PathVariable Long id) {
+        return readingService.findById(id);
+    }
+
+    
+
 }

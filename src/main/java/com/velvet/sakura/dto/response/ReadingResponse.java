@@ -12,5 +12,7 @@ public record ReadingResponse(
         Long pastCardId,
         Long presentCardId,
         Long futureCardId,
-        DeckType deckType
+        DeckType deckType,
+        String question,
+        String interpretation
 ) {}
