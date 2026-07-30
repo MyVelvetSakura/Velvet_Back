@@ -1,6 +1,9 @@
 package com.velvet.sakura.service;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.velvet.sakura.dto.request.CreateReadingRequest;
@@ -93,5 +96,10 @@ public class ReadingServiceImpl implements ReadingService {
         Reading reading = readingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lectura no encontrada"));
         return toResponse(reading);
+    }
+
+    @Override
+    public Page<ReadingResponse> findByUserIdPaginated(Long userId, Pageable pageable) {
+        return readingRepository.findByUserId(userId, pageable).map(this::toResponse);
     }
 }

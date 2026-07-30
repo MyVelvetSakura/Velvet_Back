@@ -27,40 +27,59 @@ public class OpenAIServiceImpl implements OpenAIService {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Override
-    public String generateInterpretation(String question, String pastCard, String pastMeaning,
-            String presentCard, String presentMeaning,
-            String futureCard, String futureMeaning) {
-        try {
-            String systemPrompt = """
-                    Eres una adivina mística especializada en el tarot de Cardcaptor Sakura.
-                    Tu tarea es reinterpretar, con un tono cálido, evocador y ligeramente misterioso,
-                    el significado YA DADO de tres cartas (pasado, presente, futuro) en relación
-                    a la pregunta concreta que la persona ha formulado.
+public String generateInterpretation(String question, String pastCard, String pastMeaning,
+                                      String presentCard, String presentMeaning,
+                                      String futureCard, String futureMeaning) {
+    try {
+        boolean hasQuestion = question != null && !question.isBlank();
 
-                    Reglas estrictas:
-                    - NO inventes nuevos significados para las cartas: usa exclusivamente los significados
-                      que se te proporcionan como base real.
-                    - Tu trabajo es CONECTAR esos significados con la pregunta de la persona, dándoles
-                      un hilo narrativo y una interpretación aplicada a su situación.
-                    - Responde en español, en 3 párrafos cortos (uno por carta), y termina con una frase
-                      de cierre breve a modo de consejo.
-                    - Mantén un tono cercano a Cardcaptor Sakura: mágico, esperanzador, nunca fatalista.
-                    """;
+        String systemPrompt = """
+            Eres una adivina mística especializada en el tarot de Cardcaptor Sakura.
+            Tu tarea es reinterpretar, con un tono cálido, evocador y ligeramente misterioso,
+            el significado YA DADO de tres cartas (pasado, presente, futuro).
 
-            String userPrompt = String.format("""
-                    Pregunta de la persona: "%s"
+            Reglas estrictas:
+            - NO inventes nuevos significados para las cartas: usa exclusivamente los significados
+              que se te proporcionan como base real.
+            - Responde en español, en 3 párrafos cortos (uno por carta), y termina con una frase
+              de cierre breve a modo de consejo.
+            - Mantén un tono cercano a Cardcaptor Sakura: mágico, esperanzador, nunca fatalista.
+            """;
 
-                    Carta del Pasado: %s
-                    Significado: %s
+        String userPrompt;
+        if (hasQuestion) {
+            userPrompt = String.format("""
+                Pregunta de la persona: "%s"
 
-                    Carta del Presente: %s
-                    Significado: %s
+                Carta del Pasado: %s
+                Significado: %s
 
-                    Carta del Futuro: %s
-                    Significado: %s
+                Carta del Presente: %s
+                Significado: %s
 
-                    Por favor, interpreta esta tirada en relación a la pregunta.
-                    """, question, pastCard, pastMeaning, presentCard, presentMeaning, futureCard, futureMeaning);
+                Carta del Futuro: %s
+                Significado: %s
+
+                Interpreta esta tirada conectando los significados directamente con la pregunta formulada.
+                """, question, pastCard, pastMeaning, presentCard, presentMeaning, futureCard, futureMeaning);
+        } else {
+            userPrompt = String.format("""
+                La persona no ha formulado ninguna pregunta concreta: quiere una lectura libre
+                de lo que las cartas tienen que decirle sobre su momento actual en general.
+
+                Carta del Pasado: %s
+                Significado: %s
+
+                Carta del Presente: %s
+                Significado: %s
+
+                Carta del Futuro: %s
+                Significado: %s
+
+                Interpreta esta tirada de forma libre, como una reflexión general sobre su presente,
+                sin asumir un tema o pregunta específica.
+                """, pastCard, pastMeaning, presentCard, presentMeaning, futureCard, futureMeaning);
+        }
 
             var body = mapper.createObjectNode();
             body.put("model", model);

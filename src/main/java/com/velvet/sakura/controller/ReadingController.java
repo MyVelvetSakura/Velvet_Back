@@ -2,6 +2,11 @@ package com.velvet.sakura.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,6 +55,13 @@ public class ReadingController {
         return readingService.findById(id);
     }
 
-    
+    @GetMapping(params = { "userId", "page" })
+    public Page<ReadingResponse> getByUserIdPaginated(
+            @RequestParam Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
+        return readingService.findByUserIdPaginated(userId, pageable);
+    }
 
 }
