@@ -15,7 +15,7 @@ import com.velvet.sakura.repository.ReadingRepository;
 import com.velvet.sakura.repository.VerificationTokenRepository;
 import com.velvet.sakura.security.JwtService;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -37,6 +37,9 @@ public class AccountServiceImpl implements AccountService {
     private final EmailService emailService;
     private final DeletionTokenRepository deletionTokenRepository;
     private final ReadingRepository readingRepository;
+    private final GeoLocationService geoLocationService;
+    private static final int RESET_CODE_VALID_MINUTES = 5;
+    private static final int MAX_FAILED_ATTEMPTS = 3;
 
     @Override
     public AccountResponse createAccount(CreateAccountRequest request) {
@@ -71,18 +74,35 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AuthResponse login(LoginRequest request) {
+    @Transactional(noRollbackFor = { IllegalArgumentException.class, IllegalStateException.class })
+    public AuthResponse login(LoginRequest request, String ip) {
         Account account = accountRepository.findByName(request.getName()).stream()
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("El usuario no existe"));
 
         if (!passwordEncoder.matches(request.getPassword(), account.getPasswordHash())) {
+            account.setFailedLoginAttempts(account.getFailedLoginAttempts() + 1);
+
+            if (account.getFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
+                String location = geoLocationService.resolveLocation(ip);
+                try {
+                    emailService.sendSecurityAlertEmail(account.getEmail(), account.getName(), ip, location);
+                } catch (Exception e) {
+                    System.err.println("No se pudo enviar la alerta de seguridad: " + e.getMessage());
+                }
+                account.setFailedLoginAttempts(0);
+            }
+
+            accountRepository.save(account);
             throw new IllegalArgumentException("Contraseña incorrecta");
         }
 
         if (!account.isEnabled()) {
             throw new IllegalStateException("Debes verificar tu cuenta antes de iniciar sesión. Revisa tu correo.");
         }
+
+        account.setFailedLoginAttempts(0);
+        accountRepository.save(account);
 
         String token = jwtService.generateToken(account.getName());
         return new AuthResponse(toResponse(account), token);
@@ -140,28 +160,34 @@ public class AccountServiceImpl implements AccountService {
 
         passwordResetTokenRepository.deleteByAccountId(account.getId());
 
-        String token = UUID.randomUUID().toString();
+        String code = String.format("%06d", new java.security.SecureRandom().nextInt(1_000_000));
+
         PasswordResetToken resetToken = PasswordResetToken.builder()
-                .token(token)
+                .code(code)
                 .accountId(account.getId())
-                .expiryDate(LocalDateTime.now().plusHours(1))
+                .expiryDate(LocalDateTime.now().plusMinutes(RESET_CODE_VALID_MINUTES))
                 .build();
         passwordResetTokenRepository.save(resetToken);
 
-        emailService.sendPasswordResetEmail(account.getEmail(), account.getName(), token);
+        emailService.sendPasswordResetEmail(account.getEmail(), account.getName(), code);
     }
 
     @Override
-    public void resetPassword(String token, String newPassword) {
-        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
-                .orElseThrow(() -> new IllegalArgumentException("Enlace de recuperación no válido"));
+    public void resetPassword(String email, String code, String newPassword) {
+        Account account = accountRepository.findByEmail(email.toLowerCase().trim())
+                .orElseThrow(() -> new ResourceNotFoundException("No existe ninguna cuenta con ese email"));
+
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByAccountId(account.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Solicita un nuevo código de recuperación"));
 
         if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            throw new IllegalStateException("El enlace de recuperación ha caducado");
+            passwordResetTokenRepository.delete(resetToken);
+            throw new IllegalStateException("El código ha caducado, solicita uno nuevo");
         }
 
-        Account account = accountRepository.findById(resetToken.getAccountId())
-                .orElseThrow(() -> new ResourceNotFoundException("Cuenta no encontrada"));
+        if (!resetToken.getCode().equals(code)) {
+            throw new IllegalArgumentException("Código incorrecto");
+        }
 
         account.setPasswordHash(passwordEncoder.encode(newPassword));
         accountRepository.save(account);

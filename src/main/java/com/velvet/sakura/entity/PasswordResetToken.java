@@ -13,8 +13,8 @@ public class PasswordResetToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String token;
+    @Column(nullable = false)
+    private String code;
 
     @Column(nullable = false)
     private Long accountId;

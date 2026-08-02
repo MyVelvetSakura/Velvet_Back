@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -41,8 +42,17 @@ public class AccountController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody LoginRequest request) {
-        return accountService.login(request);
+    public AuthResponse login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        String ip = extractClientIp(httpRequest);
+        return accountService.login(request, ip);
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     @GetMapping(params = "name")
@@ -70,7 +80,7 @@ public class AccountController {
 
     @PostMapping("/reset-password")
     public String resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        accountService.resetPassword(request.getToken(), request.getNewPassword());
+        accountService.resetPassword(request.getEmail(), request.getCode(), request.getNewPassword());
         return "Contraseña actualizada correctamente";
     }
 

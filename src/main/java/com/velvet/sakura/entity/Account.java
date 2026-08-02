@@ -13,13 +13,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name="accounts")
+@Table(name = "accounts")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Account {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -29,13 +29,16 @@ public class Account {
 
     @Column(nullable = false)
     private String passwordHash;
-    
-     @Column(nullable = false)
+
+    @Column(nullable = false)
     @Builder.Default
     private boolean enabled = false;
 
     @Column(nullable = false)
     @Builder.Default
     private String avatarKey = "default";
-    
+
+    @Column(nullable = false)
+    @Builder.Default
+    private int failedLoginAttempts = 0;
 }

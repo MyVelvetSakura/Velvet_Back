@@ -25,9 +25,17 @@
                     <tr>
                         <td style="padding:32px 28px;">
                             <h2 style="margin:0 0 12px; color:#3a2f5c; font-size:20px;" th:text="${title}"></h2>
-                            <p style="margin:0 0 24px; color:#5a5468; font-size:15px; line-height:1.6;" th:text="${body}"></p>
+                            <p style="margin:0 0 24px; color:#5a5468; font-size:15px; line-height:1.6; white-space: pre-line;" th:text="${body}"></p>
 
-                            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                            <!-- Bloque del código de verificación (solo aparece si se pasa 'code') -->
+                            <div th:if="${code != null}" style="text-align:center; margin: 0 0 24px;">
+                                <span style="font-size:32px; font-weight:bold; letter-spacing:6px; color:#3a2f5c; background:#f3e9f7; padding:12px 24px; border-radius:12px; display:inline-block;">
+                                    <span th:text="${code}"></span>
+                                </span>
+                            </div>
+
+                            <!-- Bloque del botón de acción (solo aparece si se pasa 'link') -->
+                            <table th:if="${link != null}" role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
                                 <tr>
                                     <td style="border-radius:24px; background: linear-gradient(90deg, #ffe08c, #f4b6d2);">
                                         <a th:href="${link}" style="display:inline-block; padding:14px 32px; font-size:15px; font-weight:bold; color:#3a2f5c; text-decoration:none; border-radius:24px;" th:text="${buttonText}">
@@ -38,7 +46,7 @@
 
                             <p style="margin:28px 0 0; color:#9a92a8; font-size:12px; line-height:1.5; text-align:center;" th:text="${footerNote}"></p>
 
-                            <p style="margin:16px 0 0; color:#b8b0c4; font-size:11px; text-align:center; word-break:break-all;">
+                            <p th:if="${link != null}" style="margin:16px 0 0; color:#b8b0c4; font-size:11px; text-align:center; word-break:break-all;">
                                 O copia este enlace en tu navegador:<br>
                                 <span th:text="${link}"></span>
                             </p>

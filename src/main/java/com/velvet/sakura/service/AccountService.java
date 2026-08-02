@@ -9,7 +9,7 @@ import java.util.List;
 public interface AccountService {
     AccountResponse createAccount(CreateAccountRequest request);
 
-    AuthResponse login(LoginRequest request);
+    AuthResponse login(LoginRequest request, String ip);
 
     List<AccountResponse> findByName(String name);
 
@@ -23,8 +23,8 @@ public interface AccountService {
 
     void requestPasswordReset(String email);
 
-    void resetPassword(String token, String newPassword);
-
+    void resetPassword(String email, String code, String newPassword);
+    
     AccountResponse updateAvatar(Long id, String avatarKey);
 
     void requestAccountDeletion(Long id, String password);
