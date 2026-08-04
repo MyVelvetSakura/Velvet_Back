@@ -12,6 +12,8 @@ import com.velvet.sakura.repository.AccountRepository;
 import com.velvet.sakura.repository.DeletionTokenRepository;
 import com.velvet.sakura.repository.PasswordResetTokenRepository;
 import com.velvet.sakura.repository.ReadingRepository;
+import com.velvet.sakura.repository.UserAchievementRepository;
+import com.velvet.sakura.repository.UserProgressRepository;
 import com.velvet.sakura.repository.VerificationTokenRepository;
 import com.velvet.sakura.security.JwtService;
 
@@ -40,10 +42,12 @@ public class AccountServiceImpl implements AccountService {
     private final GeoLocationService geoLocationService;
     private static final int RESET_CODE_VALID_MINUTES = 5;
     private static final int MAX_FAILED_ATTEMPTS = 3;
+    private final UserProgressRepository userProgressRepository;
+    private final UserAchievementRepository userAchievementRepository;
 
     @Override
     public AccountResponse createAccount(CreateAccountRequest request) {
-        if (accountRepository.existsByName(request.getName())) {
+        if (accountRepository.existsByNameIgnoreCase(request.getName())) {
             throw new IllegalArgumentException("El nombre ya está registrado");
         }
         if (accountRepository.existsByEmail(request.getEmail().toLowerCase().trim())) {
@@ -76,10 +80,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(noRollbackFor = { IllegalArgumentException.class, IllegalStateException.class })
     public AuthResponse login(LoginRequest request, String ip) {
-        Account account = accountRepository.findByName(request.getName()).stream()
-                .findFirst()
+        Account account = accountRepository.findByNameIgnoreCase(request.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("El usuario no existe"));
-
         if (!passwordEncoder.matches(request.getPassword(), account.getPasswordHash())) {
             account.setFailedLoginAttempts(account.getFailedLoginAttempts() + 1);
 
@@ -118,7 +120,7 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cuenta no encontrada"));
 
-        if (!account.getName().equals(newName) && accountRepository.existsByName(newName)) {
+        if (!account.getName().equalsIgnoreCase(newName) && accountRepository.existsByNameIgnoreCase(newName)) {
             throw new IllegalArgumentException("El nombre ya está registrado");
         }
 
@@ -242,6 +244,10 @@ public class AccountServiceImpl implements AccountService {
         readingRepository.deleteAll(readingRepository.findByUserId(accountId));
         verificationTokenRepository.deleteByAccountId(accountId);
         passwordResetTokenRepository.deleteByAccountId(accountId);
+        userAchievementRepository.deleteAll(userAchievementRepository.findByAccountId(accountId));
+        if (userProgressRepository.existsById(accountId)) {
+            userProgressRepository.deleteById(accountId);
+        }
         deletionTokenRepository.delete(deletionToken);
         accountRepository.deleteById(accountId);
     }

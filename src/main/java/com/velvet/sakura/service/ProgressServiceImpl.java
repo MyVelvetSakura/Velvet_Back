@@ -37,8 +37,7 @@ public class ProgressServiceImpl implements ProgressService {
                 progress.getExperience(),
                 xpToNext,
                 progress.getCredits(),
-                progress.getTotalReadings()
-        );
+                progress.getTotalReadings());
     }
 
     @Override
@@ -51,13 +50,13 @@ public class ProgressServiceImpl implements ProgressService {
         return all.stream()
                 .map(a -> new AchievementResponse(
                         a.getCode(), a.getTitle(), a.getDescription(),
-                        a.getCreditsReward(), unlockedCodes.contains(a.getCode())
-                ))
+                        a.getCreditsReward(), unlockedCodes.contains(a.getCode())))
                 .toList();
     }
 
     @Override
-    public void registerReadingCompleted(Long accountId, String deckType, Long pastCardId, Long presentCardId, Long futureCardId) {
+    public void registerReadingCompleted(Long accountId, String deckType, Long pastCardId, Long presentCardId,
+            Long futureCardId) {
         UserProgress progress = getOrCreateProgress(accountId);
 
         progress.setTotalReadings(progress.getTotalReadings() + 1);
@@ -108,8 +107,10 @@ public class ProgressServiceImpl implements ProgressService {
     }
 
     private void unlockIfNeeded(Long accountId, String code, boolean conditionMet) {
-        if (!conditionMet) return;
-        if (userAchievementRepository.existsByAccountIdAndAchievementCode(accountId, code)) return;
+        if (!conditionMet)
+            return;
+        if (userAchievementRepository.existsByAccountIdAndAchievementCode(accountId, code))
+            return;
 
         UserAchievement unlocked = UserAchievement.builder()
                 .accountId(accountId)
@@ -126,9 +127,8 @@ public class ProgressServiceImpl implements ProgressService {
     }
 
     private UserProgress getOrCreateProgress(Long accountId) {
+        progressRepository.insertIfNotExists(accountId);
         return progressRepository.findById(accountId)
-                .orElseGet(() -> progressRepository.save(
-                        UserProgress.builder().accountId(accountId).build()
-                ));
+                .orElseThrow(() -> new IllegalStateException("No se pudo crear el progreso del usuario"));
     }
 }
