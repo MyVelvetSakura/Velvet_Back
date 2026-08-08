@@ -2,6 +2,7 @@ package com.velvet.sakura.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +13,10 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 @Service
+@RequiredArgsConstructor
 public class OpenAIServiceImpl implements OpenAIService {
+
+    private final HttpClient httpClient;
 
     @Value("${groq.api-key}")
     private String apiKey;
@@ -20,16 +24,12 @@ public class OpenAIServiceImpl implements OpenAIService {
     @Value("${groq.model}")
     private String model;
 
-    private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
-            .build();
-
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Override
-public String generateInterpretation(String question, String pastCard, String pastMeaning,
-                                      String presentCard, String presentMeaning,
-                                      String futureCard, String futureMeaning) {
+    public String generateInterpretation(String question, String pastCard, String pastMeaning,
+                                          String presentCard, String presentMeaning,
+                                          String futureCard, String futureMeaning) {
     try {
         boolean hasQuestion = question != null && !question.isBlank();
 

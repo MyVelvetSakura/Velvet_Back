@@ -2,6 +2,7 @@ package com.velvet.sakura.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -11,11 +12,10 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 @Service
+@RequiredArgsConstructor
 public class GeoLocationServiceImpl implements GeoLocationService {
 
-    private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(5))
-            .build();
+    private final HttpClient httpClient;
 
     private final ObjectMapper mapper = new ObjectMapper();
 
