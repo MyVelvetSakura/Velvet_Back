@@ -146,3 +146,10 @@ Cobertura incluida:
 - Nombres de usuario únicos, sin distinguir mayúsculas/minúsculas.
 - Bloqueo silencioso + alerta por email tras 3 intentos fallidos de login.
 - Enlaces de verificación/recuperación/eliminación con expiración y confirmación manual (evita consumo accidental por escáneres automáticos de email).
+
+
+## Autora
+Jennifer Cros Bañuelos
+
+## Versión del proyecto
+Velvet Sakura v 8.0.1
