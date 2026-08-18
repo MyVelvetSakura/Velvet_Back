@@ -3,6 +3,7 @@ package com.velvet.sakura.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OpenAIServiceImpl implements OpenAIService {
@@ -30,56 +32,58 @@ public class OpenAIServiceImpl implements OpenAIService {
     public String generateInterpretation(String question, String pastCard, String pastMeaning,
                                           String presentCard, String presentMeaning,
                                           String futureCard, String futureMeaning) {
-    try {
-        boolean hasQuestion = question != null && !question.isBlank();
+        try {
+            log.info("Llamando a Groq con el modelo: '{}' y API Key configurada: {}", model, apiKey != null && !apiKey.isBlank());
 
-        String systemPrompt = """
-            Eres una adivina mística especializada en el tarot de Cardcaptor Sakura.
-            Tu tarea es reinterpretar, con un tono cálido, evocador y ligeramente misterioso,
-            el significado YA DADO de tres cartas (pasado, presente, futuro).
+            boolean hasQuestion = question != null && !question.isBlank();
 
-            Reglas estrictas:
-            - NO inventes nuevos significados para las cartas: usa exclusivamente los significados
-              que se te proporcionan como base real.
-            - Responde en español, en 3 párrafos cortos (uno por carta), y termina con una frase
-              de cierre breve a modo de consejo.
-            - Mantén un tono cercano a Cardcaptor Sakura: mágico, esperanzador, nunca fatalista.
-            """;
+            String systemPrompt = """
+                Eres una adivina mística especializada en el tarot de Cardcaptor Sakura.
+                Tu tarea es reinterpretar, con un tono cálido, evocador y ligeramente misterioso,
+                el significado YA DADO de tres cartas (pasado, presente, futuro).
 
-        String userPrompt;
-        if (hasQuestion) {
-            userPrompt = String.format("""
-                Pregunta de la persona: "%s"
+                Reglas estrictas:
+                - NO inventes nuevos significados para las cartas: usa exclusivamente los significados
+                  que se te proporcionan como base real.
+                - Responde en español, en 3 párrafos cortos (uno por carta), y termina con una frase
+                  de cierre breve a modo de consejo.
+                - Mantén un tono cercano a Cardcaptor Sakura: mágico, esperanzador, nunca fatalista.
+                """;
 
-                Carta del Pasado: %s
-                Significado: %s
+            String userPrompt;
+            if (hasQuestion) {
+                userPrompt = String.format("""
+                    Pregunta de la persona: "%s"
 
-                Carta del Presente: %s
-                Significado: %s
+                    Carta del Pasado: %s
+                    Significado: %s
 
-                Carta del Futuro: %s
-                Significado: %s
+                    Carta del Presente: %s
+                    Significado: %s
 
-                Interpreta esta tirada conectando los significados directamente con la pregunta formulada.
-                """, question, pastCard, pastMeaning, presentCard, presentMeaning, futureCard, futureMeaning);
-        } else {
-            userPrompt = String.format("""
-                La persona no ha formulado ninguna pregunta concreta: quiere una lectura libre
-                de lo que las cartas tienen que decirle sobre su momento actual en general.
+                    Carta del Futuro: %s
+                    Significado: %s
 
-                Carta del Pasado: %s
-                Significado: %s
+                    Interpreta esta tirada conectando los significados directamente con la pregunta formulada.
+                    """, question, pastCard, pastMeaning, presentCard, presentMeaning, futureCard, futureMeaning);
+            } else {
+                userPrompt = String.format("""
+                    La persona no ha formulado ninguna pregunta concreta: quiere una lectura libre
+                    de lo que las cartas tienen que decirle sobre su momento actual en general.
 
-                Carta del Presente: %s
-                Significado: %s
+                    Carta del Pasado: %s
+                    Significado: %s
 
-                Carta del Futuro: %s
-                Significado: %s
+                    Carta del Presente: %s
+                    Significado: %s
 
-                Interpreta esta tirada de forma libre, como una reflexión general sobre su presente,
-                sin asumir un tema o pregunta específica.
-                """, pastCard, pastMeaning, presentCard, presentMeaning, futureCard, futureMeaning);
-        }
+                    Carta del Futuro: %s
+                    Significado: %s
+
+                    Interpreta esta tirada de forma libre, como una reflexión general sobre su presente,
+                    sin asumir un tema o pregunta específica.
+                    """, pastCard, pastMeaning, presentCard, presentMeaning, futureCard, futureMeaning);
+            }
 
             var body = mapper.createObjectNode();
             body.put("model", model);
@@ -111,6 +115,7 @@ public class OpenAIServiceImpl implements OpenAIService {
                     HttpResponse.BodyHandlers.ofString(java.nio.charset.StandardCharsets.UTF_8));
 
             if (response.statusCode() != 200) {
+                log.error("Error devuelto por Groq [HTTP {}]: {}", response.statusCode(), response.body());
                 throw new RuntimeException(
                         "Groq respondió con estado " + response.statusCode() + ": " + response.body());
             }
@@ -119,6 +124,7 @@ public class OpenAIServiceImpl implements OpenAIService {
             return json.get("choices").get(0).get("message").get("content").asText();
 
         } catch (Exception e) {
+            log.error("Excepción al intentar llamar a la API de Groq: ", e);
             throw new RuntimeException("No se pudo generar la interpretación", e);
         }
     }
