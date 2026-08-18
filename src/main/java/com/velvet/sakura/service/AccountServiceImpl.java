@@ -46,36 +46,39 @@ public class AccountServiceImpl implements AccountService {
     private final UserAchievementRepository userAchievementRepository;
 
     @Override
-    public AccountResponse createAccount(CreateAccountRequest request) {
-        if (accountRepository.existsByNameIgnoreCase(request.getName())) {
-            throw new IllegalArgumentException("El nombre ya está registrado");
-        }
-        if (accountRepository.existsByEmail(request.getEmail().toLowerCase().trim())) {
-            throw new IllegalArgumentException("El email ya está registrado");
-        }
-
-        Account account = Account.builder()
-                .name(request.getName())
-                .email(request.getEmail().toLowerCase().trim())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .enabled(false)
-                .avatarKey(request.getAvatarKey() != null ? request.getAvatarKey() : "default")
-                .build();
-
-        Account saved = accountRepository.save(account);
-
-        String token = UUID.randomUUID().toString();
-        VerificationToken verificationToken = VerificationToken.builder()
-                .token(token)
-                .accountId(saved.getId())
-                .expiryDate(LocalDateTime.now().plusHours(24))
-                .build();
-        verificationTokenRepository.save(verificationToken);
-
-        emailService.sendVerificationEmail(saved.getEmail(), saved.getName(), token);
-
-        return toResponse(saved);
+public AccountResponse createAccount(CreateAccountRequest request) {
+    if (accountRepository.existsByNameIgnoreCase(request.getName())) {
+        throw new IllegalArgumentException("El nombre ya está registrado");
     }
+    if (accountRepository.existsByEmail(request.getEmail().toLowerCase().trim())) {
+        throw new IllegalArgumentException("El email ya está registrado");
+    }
+
+    Account account = Account.builder()
+            .name(request.getName())
+            .email(request.getEmail().toLowerCase().trim())
+            .passwordHash(passwordEncoder.encode(request.getPassword()))
+            .enabled(false)
+            .avatarKey(request.getAvatarKey() != null ? request.getAvatarKey() : "default")
+            .build();
+
+    Account saved = accountRepository.save(account);
+
+    String token = UUID.randomUUID().toString();
+    VerificationToken verificationToken = VerificationToken.builder()
+            .token(token)
+            .accountId(saved.getId())
+            .expiryDate(LocalDateTime.now().plusHours(24))
+            .build();
+    verificationTokenRepository.save(verificationToken);
+    try {
+        emailService.sendVerificationEmail(saved.getEmail(), saved.getName(), token);
+    } catch (Exception e) {
+        System.err.println("Error al enviar el email de verificación: " + e.getMessage());
+    }
+
+    return toResponse(saved);
+}
 
     @Override
     @Transactional(noRollbackFor = { IllegalArgumentException.class, IllegalStateException.class })
