@@ -30,7 +30,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendVerificationEmail(String toEmail, String name, String token) {
-        String link = frontendUrl + "verify-account?token=" + token;
+        String link = frontendUrl + "/verify-account?token=" + token;
 
         Context context = new Context();
         context.setVariable("preheader", "Verifica tu cuenta");
