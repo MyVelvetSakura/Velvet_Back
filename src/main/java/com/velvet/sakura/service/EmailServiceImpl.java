@@ -1,24 +1,32 @@
 package com.velvet.sakura.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.util.List;
+import java.util.Map;
+
 @Service
-@RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
-    private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
+    private final RestClient restClient;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
+
+    public EmailServiceImpl(TemplateEngine templateEngine, 
+                            @Value("${resend.api.key}") String apiKey) {
+        this.templateEngine = templateEngine;
+        this.restClient = RestClient.builder()
+                .baseUrl("https://api.resend.com")
+                .defaultHeader("Authorization", "Bearer " + apiKey)
+                .build();
+    }
 
     @Override
     public void sendVerificationEmail(String toEmail, String name, String token) {
@@ -49,19 +57,6 @@ public class EmailServiceImpl implements EmailService {
 
         String html = templateEngine.process("email-template", context);
         send(toEmail, "Tu código de recuperación de Velvet Sakura", html);
-    }
-
-    private void send(String toEmail, String subject, String html) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
-            helper.setTo(toEmail);
-            helper.setSubject(subject);
-            helper.setText(html, true);
-            mailSender.send(message);
-        } catch (MessagingException e) {
-            throw new RuntimeException("No se pudo enviar el correo", e);
-        }
     }
 
     @Override
@@ -98,5 +93,26 @@ public class EmailServiceImpl implements EmailService {
 
         String html = templateEngine.process("email-template", context);
         send(toEmail, "⚠️ Alerta de seguridad en tu cuenta de Velvet Sakura", html);
+    }
+
+    private void send(String toEmail, String subject, String html) {
+        try {
+            Map<String, Object> requestBody = Map.of(
+                "from", "Velvet Sakura <onboarding@resend.dev>",
+                "to", List.of(toEmail),
+                "subject", subject,
+                "html", html
+            );
+
+            restClient.post()
+                    .uri("/emails")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .toBodilessEntity();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al enviar correo vía Resend API", e);
+        }
     }
 }
