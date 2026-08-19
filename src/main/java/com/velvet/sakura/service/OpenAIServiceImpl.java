@@ -23,7 +23,7 @@ public class OpenAIServiceImpl implements OpenAIService {
     @Value("${groq.api-key}")
     private String apiKey;
 
-    @Value("${groq.model}")
+    @Value("${groq.model:llama-3.3-70b-versatile}")
     private String model;
 
     private final ObjectMapper mapper = new ObjectMapper();
