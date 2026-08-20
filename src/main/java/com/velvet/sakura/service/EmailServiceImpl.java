@@ -19,12 +19,15 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
+    @Value("${brevo.sender.email}")
+    private String senderEmail;
+
     public EmailServiceImpl(TemplateEngine templateEngine, 
-                            @Value("${resend.api.key}") String apiKey) {
+                            @Value("${brevo.api.key}") String apiKey) {
         this.templateEngine = templateEngine;
         this.restClient = RestClient.builder()
-                .baseUrl("https://api.resend.com")
-                .defaultHeader("Authorization", "Bearer " + apiKey)
+                .baseUrl("https://api.brevo.com/v3")
+                .defaultHeader("api-key", apiKey)
                 .build();
     }
 
@@ -98,21 +101,21 @@ public class EmailServiceImpl implements EmailService {
     private void send(String toEmail, String subject, String html) {
         try {
             Map<String, Object> requestBody = Map.of(
-                "from", "Velvet Sakura <onboarding@resend.dev>",
-                "to", List.of(toEmail),
+                "sender", Map.of("name", "Velvet Sakura", "email", senderEmail),
+                "to", List.of(Map.of("email", toEmail)),
                 "subject", subject,
-                "html", html
+                "htmlContent", html
             );
 
             restClient.post()
-                    .uri("/emails")
+                    .uri("/smtp/email")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requestBody)
                     .retrieve()
                     .toBodilessEntity();
 
         } catch (Exception e) {
-            throw new RuntimeException("Error al enviar correo vía Resend API", e);
+            throw new RuntimeException("Error al enviar correo vía Brevo API", e);
         }
     }
 }
