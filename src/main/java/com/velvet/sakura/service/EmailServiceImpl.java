@@ -99,23 +99,27 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private void send(String toEmail, String subject, String html) {
-        try {
-            Map<String, Object> requestBody = Map.of(
-                "sender", Map.of("name", "Velvet Sakura", "email", senderEmail),
-                "to", List.of(Map.of("email", toEmail)),
-                "subject", subject,
-                "htmlContent", html
-            );
+    try {
+        Map<String, Object> requestBody = Map.of(
+            "sender", Map.of("name", "Velvet Sakura", "email", senderEmail),
+            "to", List.of(Map.of("email", toEmail)),
+            "subject", subject,
+            "htmlContent", html
+        );
 
-            restClient.post()
-                    .uri("/smtp/email")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(requestBody)
-                    .retrieve()
-                    .toBodilessEntity();
+        restClient.post()
+                .uri("/smtp/email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(requestBody)
+                .retrieve()
+                .toBodilessEntity();
 
-        } catch (Exception e) {
-            throw new RuntimeException("Error al enviar correo vía Brevo API", e);
-        }
+    } catch (org.springframework.web.client.RestClientResponseException e) {
+        System.err.println("Error Status Brevo: " + e.getStatusCode());
+        System.err.println("Error Body Brevo: " + e.getResponseBodyAsString());
+        throw new RuntimeException("Error al enviar correo vía Brevo API", e);
+    } catch (Exception e) {
+        throw new RuntimeException("Error al enviar correo vía Brevo API", e);
     }
+}
 }
